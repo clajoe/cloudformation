@@ -1,0 +1,97 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: A sample template KCP project
+Resources:
+  KCPVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+      Tags:
+       - Key: Name
+         Value: KCPVPC
+
+  KCPInternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+      - Key: Name
+        Value: KCP_IGW
+
+  KCPAttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId:
+         Ref: KCPVPC
+      InternetGatewayId:
+         Ref: KCPInternetGateway
+
+  KCPPUBSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: KCPVPC
+      CidrBlock: 10.0.0.0/24
+      AvailabilityZone: "us-east-1a"
+      MapPublicIpOnLaunch: "true"
+      Tags:
+      - Key: Name
+        Value: KCP_PUB_SUB
+
+  KCPPVTSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: KCPVPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: "us-east-1b"
+      MapPublicIpOnLaunch: "false"
+      Tags:
+      - Key: Name
+        Value: KCP_PVT_SUB
+
+  KCPPUBRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:  
+        Ref: KCPVPC
+      Tags:
+      - Key: Name
+        Value: KCP_PUB_RT
+
+  KCPPVTRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:  
+        Ref: KCPVPC
+      Tags:
+      - Key: Name
+        Value: KCP_PVT_RT
+
+  KCPIGWRoute:
+    Type: AWS::EC2::Route
+    DependsOn: KCPAttachGateway
+    Properties:
+       RouteTableId:
+         Ref: KCPPUBRouteTable
+       DestinationCidrBlock: 0.0.0.0/0
+       GatewayId:
+         Ref: KCPInternetGateway
+
+  KCPPUBSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: KCPPUBSubnet
+      RouteTableId:
+        Ref: KCPPUBRouteTable
+
+  KCPPVTSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: KCPPVTSubnet
+      RouteTableId:
+        Ref: KCPPVTRouteTable
+
+  
